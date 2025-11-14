@@ -1,0 +1,15 @@
+package cm.apiempleado;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+
+@SpringBootApplication
+@EnableFeignClients
+public class ApiEmpleadoApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ApiEmpleadoApplication.class, args);
+    }
+
+}
