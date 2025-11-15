@@ -13,10 +13,10 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .info(
                         new Info()
-                                .title("API de Gestión de Pago de Citas")
+                                .title("API de Gestión de Usuarios")
                                 .version("1.0")
                                 .description(
-                                        "API para administrar pagos de citas del sistema de gestión de centro médico"
+                                        "API para administrar usuarios del sistema de gestión de centro médico"
                                 )
                 );
     }

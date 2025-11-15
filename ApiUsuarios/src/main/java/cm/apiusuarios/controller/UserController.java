@@ -1,10 +1,12 @@
 package cm.apiusuarios.controller;
 
+import cm.apiusuarios.dto.UserCookieResponse;
 import cm.apiusuarios.dto.UserRequest;
 import cm.apiusuarios.dto.UserResponse;
 import cm.apiusuarios.service.UserService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +60,16 @@ public class UserController {
         log.info("Solicitud de buscar usuario por ID: {} recibida", id);
         UserResponse user = service.buscarPorId(id);
         log.info("Solicitud de buscar usuario por ID: {} terminada, respuesta enviada", id);
+
+        return ResponseEntity.ok().body(user);
+    }
+
+    @GetMapping("/session/user-data")
+    public ResponseEntity<UserCookieResponse> getUserInSessionData(HttpServletRequest request) {
+
+        log.info("Solicitud de obtener datos de usuario en sesión recibida");
+        UserCookieResponse user = service.getUserInSessionData(request);
+        log.info("Solicitud de obtener datos de usuario en sesión terminada, respuesta enviada");
 
         return ResponseEntity.ok().body(user);
     }
