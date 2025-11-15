@@ -1,6 +1,7 @@
 package cm.apiusuarios.service;
 
 import cm.apiusuarios.repository.user.User;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -44,6 +45,20 @@ public class JwtService {
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    /**
+     * Extrae el Payload del JWT
+     *
+     * @param token El JWT
+     * @return El payload del JWT
+     */
+    public Claims extractPayload(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     /**

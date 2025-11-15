@@ -1,10 +1,14 @@
 package cm.apiusuarios.service;
 
+import cm.apiusuarios.dto.UserCookieResponse;
 import cm.apiusuarios.dto.UserRequest;
 import cm.apiusuarios.dto.UserResponse;
 import cm.apiusuarios.repository.user.User;
 import cm.apiusuarios.repository.user.UserRepository;
+import io.jsonwebtoken.Claims;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +22,7 @@ public class UserService {
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @Transactional
     public void registrar(UserRequest request) {
@@ -57,12 +62,41 @@ public class UserService {
         repository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
+    public UserCookieResponse getUserInSessionData(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("USER_SESSION")) {
+                    Claims claims = jwtService.extractPayload(cookie.getValue());
+                    String email = claims.getSubject();
+
+                    User user = repository.findByEmail(email)
+                            .orElseThrow(() ->
+                                    new EntityNotFoundException("Usuario con email: " + email + " no encontrado"));
+
+                    return toCookieResponse(user);
+                }
+            }
+        }
+        return null;
+    }
+
     private UserResponse toResponse(User user) {
         return new UserResponse(
                 user.getId(),
                 user.getNombreUsuario(),
                 user.getEmail(),
                 user.getEstado(),
+                user.getRol()
+        );
+    }
+
+    private UserCookieResponse toCookieResponse(User user) {
+        return new UserCookieResponse(
+                user.getId(),
+                user.getNombreUsuario(),
+                user.getEmail(),
                 user.getRol()
         );
     }
