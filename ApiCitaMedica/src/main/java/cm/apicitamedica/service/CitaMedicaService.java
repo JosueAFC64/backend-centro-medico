@@ -22,6 +22,7 @@ import com.itextpdf.text.pdf.*;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -103,26 +104,25 @@ public class CitaMedicaService {
     }
 
     /**
-     * Busca una cita por DNI del Paciente
+     * Busca todas las citas pendientes de una Paciente por DNI
      *
      * @param dni DNI del paciente
-     * @return Objeto {@link CitaMedicaResponse} que contiene los datos de la cita
+     * @return Lista de objetos {@link CitaMedicaResponse} que contiene los datos de las citas
      * @throws EntityNotFoundException Si no se encuentra la cita con el DNI brindado
      */
     @Transactional(readOnly = true)
-    public CitaMedicaResponse buscarPorDniPaciente(String dni) {
+    public List<CitaMedicaResponse> buscarPorDniPaciente(String dni) {
         log.info("Inicio de proceso de buscar por DNI: {}", dni);
 
-        CitaMedica cita = repository.findByDniPaciente(dni)
-                .orElseThrow(() -> {
-                    log.warn("No existe una cita con DNI: {}", dni);
-                    return new EntityNotFoundException(
-                            "Cita con DNI: " + dni + " no encontrada"
-                    );
-                });
-        log.info("Cita con ID: {} encontrada", cita.getId());
+        List<CitaMedica> citas = repository.findAllByDniPacienteAndEstadoIsContaining(
+                dni,
+                CitaMedica.EstadoCitaMedica.PENDIENTE
+        );
+        log.info("Citas encontradas correctamente: {}", citas.size());
 
-        return toResponse(cita);
+        return citas.stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     /**

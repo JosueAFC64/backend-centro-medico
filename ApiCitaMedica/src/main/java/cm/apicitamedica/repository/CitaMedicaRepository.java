@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CitaMedicaRepository extends JpaRepository<CitaMedica, Long> {
@@ -45,4 +46,6 @@ public interface CitaMedicaRepository extends JpaRepository<CitaMedica, Long> {
                                            @Param("idCitaExcluir") Long idCitaExcluir);
 
     Optional<CitaMedica> findByDniPaciente(String dniPaciente);
+
+    List<CitaMedica> findAllByDniPacienteAndEstadoIsContaining(String dniPaciente, CitaMedica.EstadoCitaMedica estado);
 }

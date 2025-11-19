@@ -24,6 +24,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequestMapping("/citas-medicas")
@@ -130,17 +132,17 @@ public class CitaMedicaController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public ResponseEntity<CitaMedicaResponse> buscarPorDniPaciente(
+    public ResponseEntity<List<CitaMedicaResponse>> buscarPorDniPaciente(
             @Parameter(description = "DNI único del Paciente")
             @PathVariable
             @NotNull(message = "El DNI es requerido")
             String dni) {
 
         log.info("Solicitud de buscar por DNI: {} recibida", dni);
-        CitaMedicaResponse cita = service.buscarPorDniPaciente(dni);
+        List<CitaMedicaResponse> citas = service.buscarPorDniPaciente(dni);
         log.info("Solicitud de buscar por DNI: {} terminada, respuesta enviada", dni);
 
-        return ResponseEntity.ok().body(cita);
+        return ResponseEntity.ok().body(citas);
     }
 
     @PatchMapping("/{id}")
