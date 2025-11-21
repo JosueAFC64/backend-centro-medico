@@ -114,7 +114,7 @@ public class CitaMedicaService {
     public List<CitaMedicaResponse> buscarPorDniPaciente(String dni) {
         log.info("Inicio de proceso de buscar por DNI: {}", dni);
 
-        List<CitaMedica> citas = repository.findAllByDniPacienteAndEstadoIsContaining(
+        List<CitaMedica> citas = repository.findAllByDniPacienteAndEstado(
                 dni,
                 CitaMedica.EstadoCitaMedica.PENDIENTE
         );
@@ -240,12 +240,12 @@ public class CitaMedicaService {
 
     /**
      * Completa una Cita y Registra un Pago de la misma en ApiPago
+     *
      * @param id Identificador único de la cita
-     * @return Objeto {@link CitaMedicaResponse} que contiene los datos de la cita
      * @throws EntityNotFoundException Si no se encuentra una cita con el ID brindado
      */
     @Transactional
-    public CitaMedicaResponse completarCita(Long id) {
+    public void completarCita(Long id) {
         log.info("Inicio de completar cita con ID: {}", id);
 
         CitaMedica cita = repository.findById(id)
@@ -258,8 +258,6 @@ public class CitaMedicaService {
 
         repository.save(cita);
         log.info("Cita con ID: {} cancelada correctamente", cita.getEstado());
-
-        return toResponse(cita);
     }
 
     /**

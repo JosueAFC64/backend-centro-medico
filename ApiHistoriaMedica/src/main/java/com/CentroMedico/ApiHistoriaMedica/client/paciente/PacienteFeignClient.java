@@ -1,4 +1,4 @@
-package com.CentroMedico.ApiHistoriaMedica.client;
+package com.CentroMedico.ApiHistoriaMedica.client.paciente;
 
 import com.CentroMedico.ApiHistoriaMedica.dto.PacienteSimpleResponse;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;

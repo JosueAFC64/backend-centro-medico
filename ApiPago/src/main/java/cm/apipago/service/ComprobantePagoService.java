@@ -182,7 +182,6 @@ public class ComprobantePagoService {
         return new PagoCitaResponse(
                 p.getId(),
                 cita,
-                p.getDniPaciente(),
                 p.getMontoTotal(),
                 p.getMetodoPago(),
                 p.getEstado()

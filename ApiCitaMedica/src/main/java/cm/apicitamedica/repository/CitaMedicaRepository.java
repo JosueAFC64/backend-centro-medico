@@ -47,5 +47,5 @@ public interface CitaMedicaRepository extends JpaRepository<CitaMedica, Long> {
 
     Optional<CitaMedica> findByDniPaciente(String dniPaciente);
 
-    List<CitaMedica> findAllByDniPacienteAndEstadoIsContaining(String dniPaciente, CitaMedica.EstadoCitaMedica estado);
+    List<CitaMedica> findAllByDniPacienteAndEstado(String dniPaciente, CitaMedica.EstadoCitaMedica estado);
 }

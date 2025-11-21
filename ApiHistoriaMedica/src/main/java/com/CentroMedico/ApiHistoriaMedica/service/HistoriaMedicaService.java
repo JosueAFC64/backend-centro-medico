@@ -1,18 +1,22 @@
 package com.CentroMedico.ApiHistoriaMedica.service;
 
-import com.CentroMedico.ApiHistoriaMedica.client.PacienteFeignClient;
+import com.CentroMedico.ApiHistoriaMedica.client.atencionmedica.AtencionMedicaFeignClient;
+import com.CentroMedico.ApiHistoriaMedica.client.atencionmedica.AtencionMedicaFeignResponse;
+import com.CentroMedico.ApiHistoriaMedica.client.paciente.PacienteFeignClient;
 import com.CentroMedico.ApiHistoriaMedica.dto.HistoriaMedicaRequest;
 import com.CentroMedico.ApiHistoriaMedica.dto.HistoriaMedicaResponse;
 import com.CentroMedico.ApiHistoriaMedica.dto.PacienteAnidadoResponse;
 import com.CentroMedico.ApiHistoriaMedica.dto.PacienteSimpleResponse;
 import com.CentroMedico.ApiHistoriaMedica.repository.HistoriaMedica;
 import com.CentroMedico.ApiHistoriaMedica.repository.HistoriaMedicaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Collections;
 import java.util.stream.Collectors;
@@ -26,6 +30,7 @@ import java.time.Period;
 public class HistoriaMedicaService {
     private final HistoriaMedicaRepository repository;
     private final PacienteFeignClient pacienteClient;
+    private final AtencionMedicaFeignClient atencionMedicaClient;
 
 
     /**
@@ -169,6 +174,17 @@ public class HistoriaMedicaService {
         return repository.existsByIdPaciente(idPaciente);
     }
 
+    @Transactional
+    public void registrarAtencionMedica(String dniPaciente, Long idAtencion) {
+        HistoriaMedica historia = repository.findById(dniPaciente)
+                .orElseThrow(() -> {
+                    log.warn("Historia Médica con ID: {} no encontrada", dniPaciente);
+                    return new EntityNotFoundException("Historia Médica con ID: " + dniPaciente + " no encontrada");
+                });
+
+        historia.agregarAtencion(idAtencion);
+        repository.save(historia);
+    }
 
     private HistoriaMedica toEntity(HistoriaMedicaRequest request, Long idPaciente, Integer edadCalculada) { // <<< EDAD AÑADIDA
         return HistoriaMedica.builder()
@@ -181,10 +197,18 @@ public class HistoriaMedicaService {
                 .alergias(request.alergias())
                 .antecedentesFamiliares(request.antecedentesFamiliares())
                 .antecedentesPersonales(request.antecedentesPersonales())
+                .atencionesIds(new HashSet<>())
                 .build();
     }
 
     private HistoriaMedicaResponse toResponse(HistoriaMedica historia, PacienteSimpleResponse pacienteData) {
+        List<AtencionMedicaFeignResponse> atenciones = historia.getAtencionesIds() == null || historia.getAtencionesIds()
+                .isEmpty()
+                ? List.of()
+                : historia.getAtencionesIds()
+                .stream()
+                .map(this::obtenerAtencionMedica)
+                .toList();
 
         PacienteAnidadoResponse pacienteAnidado = PacienteAnidadoResponse.builder()
                 .idPaciente(pacienteData.idPaciente())
@@ -204,6 +228,16 @@ public class HistoriaMedicaService {
                 .antecedentesFamiliares(historia.getAntecedentesFamiliares())
                 .antecedentesPersonales(historia.getAntecedentesPersonales())
                 .fechaCreacion(historia.getFechaCreacion())
+                .atenciones(atenciones)
                 .build();
+    }
+
+    public AtencionMedicaFeignResponse obtenerAtencionMedica(Long idAtencion) {
+        try {
+            log.info("Atención Médica con ID: {} encontrada correctamente", idAtencion);
+            return atencionMedicaClient.obtenerAtencionMedica(idAtencion);
+        } catch (Exception e) {
+            throw new RuntimeException("Error inesperado al obtener Atención Médica", e);
+        }
     }
 }

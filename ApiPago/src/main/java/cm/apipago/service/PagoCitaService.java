@@ -87,7 +87,6 @@ public class PagoCitaService {
         return new PagoCitaResponse(
                 p.getId(),
                 cita,
-                p.getDniPaciente(),
                 p.getMontoTotal(),
                 p.getMetodoPago(),
                 p.getEstado()
