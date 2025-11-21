@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDate;
+import java.util.Set;
 
 @Entity
 @Table(name = "historia_medica")
@@ -45,8 +46,24 @@ public class HistoriaMedica {
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDate fechaCreacion;
 
+    @ElementCollection
+    @CollectionTable(
+            name = "historia_atenciones",
+            joinColumns = @JoinColumn(name = "historia_id")
+    )
+    @Column(name = "atenciones_ids")
+    private Set<Long> atencionesIds;
+
     @PrePersist
     protected void onCreate() {
         fechaCreacion = LocalDate.now();
+    }
+
+    public void agregarAtencion(Long idAtencion){
+        if (idAtencion == null || idAtencion <= 0) {
+            throw new IllegalArgumentException("El ID de la atención no puede ser negativo o nulo");
+        }
+
+        atencionesIds.add(idAtencion);
     }
 }

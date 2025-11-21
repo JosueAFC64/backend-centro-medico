@@ -48,6 +48,15 @@ public class HistoriaMedicaController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/feign/{dniPaciente}/{idAtencion}")
+    public ResponseEntity<Void> registrarAtencionMedica(
+            @PathVariable String dniPaciente,
+            @PathVariable Long idAtencion) {
+
+        service.registrarAtencionMedica(dniPaciente, idAtencion);
+        return ResponseEntity.noContent().build();
+    }
+
     /**
      * Busca una lista de historias médicas buscando pacientes por nombre o apellido
      * en ApiPaciente, y luego buscando las historias asociadas.

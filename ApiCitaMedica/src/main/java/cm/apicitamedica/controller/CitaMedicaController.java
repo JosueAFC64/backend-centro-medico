@@ -265,12 +265,12 @@ public class CitaMedicaController {
         return ResponseEntity.ok().body(cita);
     }
 
-    @PatchMapping("/completar/{id}")
+    @PutMapping("/completar/{id}")
     @Operation(summary = "Completar una cita médica",
             description = "Marca como completada una cita médica existente y registra un pago de la misma")
     @ApiResponses({
             @ApiResponse(
-                    responseCode = "200",
+                    responseCode = "204",
                     description = "Cita marcada como completada correctamente",
                     content = @Content(schema = @Schema(implementation = CitaMedicaResponse.class))
             ),
@@ -290,17 +290,17 @@ public class CitaMedicaController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public ResponseEntity<CitaMedicaResponse> completarCita(
+    public ResponseEntity<Void> completarCita(
             @Parameter(description = "Identificador único de la Cita")
             @PathVariable
             @Positive(message = "El ID de la Cita debe ser positivo")
             Long id) {
 
         log.info("Solicitud de completar Cita con ID: {} recibida", id);
-        CitaMedicaResponse cita = service.completarCita(id);
+        service.completarCita(id);
         log.info("Solicitud de completar Cita con ID: {} terminada, respuesta enviada", id);
 
-        return ResponseEntity.ok().body(cita);
+        return ResponseEntity.noContent().build();
     }
 
     // ENDPOINTS PARA BRINDAR DATOS A OTROS MICROSERVICIOS
