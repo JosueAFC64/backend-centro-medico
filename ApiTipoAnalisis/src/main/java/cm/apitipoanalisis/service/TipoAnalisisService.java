@@ -33,7 +33,6 @@ public class TipoAnalisisService {
         log.debug("Creando Tipo Analisis: {}", request);
         TipoAnalisis ta = TipoAnalisis.builder()
                 .nombre(request.nombre())
-                .precio(request.precio())
                 .muestraRequerida(request.muestraRequerida())
                 .build();
 
@@ -91,11 +90,6 @@ public class TipoAnalisisService {
             ta.setNombre(request.nombre());
         }
 
-        if (request.precio().compareTo(ta.getPrecio()) != 0) {
-            log.debug("Actualizando precio de: {} a {}", ta.getPrecio(), request.precio());
-            ta.setPrecio(request.precio());
-        }
-
         if (!ta.getMuestraRequerida().equals(request.muestraRequerida())) {
             log.debug("Actualizando muestra de: {} a {}", ta.getMuestraRequerida(), request.muestraRequerida());
             ta.setMuestraRequerida(request.muestraRequerida());
@@ -124,7 +118,6 @@ public class TipoAnalisisService {
         return new TipoAnalisisResponse(
                 ta.getId(),
                 ta.getNombre(),
-                ta.getPrecio(),
                 ta.getMuestraRequerida()
         );
     }

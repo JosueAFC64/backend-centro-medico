@@ -32,6 +32,7 @@ public class CitaMedica {
     @Column(name = "costo", nullable = false)
     private BigDecimal costo;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
     @Builder.Default
     private EstadoCitaMedica estado = EstadoCitaMedica.PENDIENTE;

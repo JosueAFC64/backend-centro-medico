@@ -23,9 +23,6 @@ public class TipoAnalisis {
     @Column(name = "nombre", nullable = false)
     private String nombre;
 
-    @Column(name = "precio", nullable = false)
-    private BigDecimal precio;
-
     @Column(name = "muestra_requerida", nullable = false)
     private String muestraRequerida;
 
