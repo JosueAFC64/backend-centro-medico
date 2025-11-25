@@ -1,4 +1,4 @@
-package cm.apimedicamentos.dto;
+package cm.apirecetamedica.client.medicamentos;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -9,7 +9,7 @@ public record MedicamentosResponse(
         @Schema(description = "Nombre del Medicamento", example = "Amoxicilina")
         String nombre,
 
-        @Schema(description = "Presentación del Medicamento", example = "Cápsulas")
+        @Schema(description = "Presentación del Medicamento", example = "Cápsulas de 500 mg")
         String presentacion
 ) {
 }

@@ -8,7 +8,7 @@ public record MedicamentosRequest(
         @NotBlank(message = "El nombre es requerido")
         String nombre,
 
-        @Schema(description = "Presentación del Medicamento", example = "Cápsulas de 500 mg")
+        @Schema(description = "Presentación del Medicamento", example = "Cápsulas")
         @NotBlank(message = "La presentación es requerida")
         String presentacion
 ) {
