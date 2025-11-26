@@ -3,6 +3,7 @@ package cm.apihorario.controller;
 import cm.apihorario.dto.HorarioRequest;
 import cm.apihorario.dto.HorarioResponse;
 import cm.apihorario.dto.SlotClientResponse;
+import cm.apihorario.dto.SlotDisponibleResponse;
 import cm.apihorario.exceptions.ErrorResponse;
 import cm.apihorario.service.HorarioService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,6 +24,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Slf4j
@@ -310,6 +312,42 @@ public class HorarioController {
         log.info("Solicitud de brindar slot: {} recibida", idDetalle);
         SlotClientResponse slot = horarioService.brindarSlot(idHorario, idDetalle);
         log.info("Solicitud de brindar slot: {} terminada, respuesta enviada", idDetalle);
+
+        return ResponseEntity.ok(slot);
+    }
+
+    @GetMapping("/client/slots/disponibles")
+    @Operation(summary = "Buscar slot disponible",
+            description = "Busca un slot disponible de un médico para una fecha y hora específica")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Slot disponible encontrado",
+                    content = @Content(schema = @Schema(implementation = SlotDisponibleResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "No existe horario o no hay slots disponibles",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<SlotDisponibleResponse> buscarSlotDisponible(
+            @Parameter(description = "Identificador único del médico")
+            @RequestParam
+            @Positive(message = "El ID de Médico debe ser positivo")
+            Long idMedico,
+
+            @Parameter(description = "Fecha para buscar el slot")
+            @RequestParam
+            LocalDate fecha,
+
+            @Parameter(description = "Hora preferida para el slot (opcional)")
+            @RequestParam(required = false)
+            LocalTime hora) {
+
+        log.info("Solicitud de buscar slot disponible para médico: {} en fecha: {} a hora: {} recibida", idMedico, fecha, hora);
+        SlotDisponibleResponse slot = horarioService.buscarSlotDisponible(idMedico, fecha, hora);
+        log.info("Solicitud de buscar slot disponible terminada, respuesta enviada");
 
         return ResponseEntity.ok(slot);
     }

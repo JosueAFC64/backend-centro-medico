@@ -1,5 +1,6 @@
 package cm.apiatencionmedica.client.citamedica;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
@@ -21,8 +22,17 @@ public record CitaMedicaFeignResponse(
         @Schema(description = "Nombre completo del Médico", example = "Gerald Pacheco")
         String medico,
 
+        @Schema(description = "ID del Médico original", example = "1")
+        Long idMedico,
+
+        @Schema(description = "ID del Médico delegado (si existe)", example = "2")
+        Long idMedicoDelegado,
+
         @Schema(description = "Nombre de la especialidad", example = "Cardiología")
-        String especialidad
+        String especialidad,
+
+        @Parameter(description = "Motivo del reemplazo al Médico original", example = "Diarrea")
+        String motivoReemplazo
 ) {
     public record DatosPaciente(
             String nombre,

@@ -1,14 +1,18 @@
 package cm.apicitamedica.service;
 
+import cm.apicitamedica.client.empleado.EmpleadoClientResponse;
+import cm.apicitamedica.client.empleado.EmpleadoFeignClient;
 import cm.apicitamedica.client.paciente.PacienteFeignClient;
 import cm.apicitamedica.client.paciente.PacienteSimpleResponse;
 import cm.apicitamedica.client.pagocita.PagoCitaFeignClient;
 import cm.apicitamedica.client.pagocita.PagoCitaRequest;
 import cm.apicitamedica.client.slot.DetalleHorarioFeignClient;
 import cm.apicitamedica.client.slot.SlotClientResponse;
+import cm.apicitamedica.client.slot.SlotDisponibleResponse;
 import cm.apicitamedica.dto.CitaMedicaFeignResponse;
 import cm.apicitamedica.dto.CitaMedicaRequest;
 import cm.apicitamedica.dto.CitaMedicaResponse;
+import cm.apicitamedica.dto.MotivoReemplazoRequest;
 import cm.apicitamedica.repository.CitaMedica;
 import cm.apicitamedica.repository.CitaMedicaRepository;
 import com.itextpdf.text.pdf.draw.LineSeparator;
@@ -33,6 +37,7 @@ public class CitaMedicaService {
     private final PacienteFeignClient pacienteClient;
     private final DetalleHorarioFeignClient detallesClient;
     private final PagoCitaFeignClient pagoCitaClient;
+    private final EmpleadoFeignClient empleadoClient;
 
     // SERVICIOS CRUD
 
@@ -119,6 +124,18 @@ public class CitaMedicaService {
                 CitaMedica.EstadoCitaMedica.PENDIENTE
         );
         log.info("Citas encontradas correctamente: {}", citas.size());
+
+        return citas.stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CitaMedicaResponse> buscarCitasDelegadas(Long idMedicoDelegado) {
+        log.info("Buscando Citas Delegas para Médico con ID: {}", idMedicoDelegado);
+
+        List<CitaMedica> citas = repository.findAllByIdMedicoDelegado(idMedicoDelegado);
+        log.info("Citas Delegadas encontradas correctamente: {}", citas.size());
 
         return citas.stream()
                 .map(this::toResponse)
@@ -587,10 +604,104 @@ public class CitaMedicaService {
                 paciente.dni()
         );
 
+        String motivoReemplazo = (cita.getMotivoReemplazo() != null) ? cita.getMotivoReemplazo() : null;
 
         SlotClientResponse slot = obtenerSlot(cita.getIdHorario(), cita.getIdDetalleHorario());
 
-        return toFeignResponse(cita.getId(),cita.getEstado(), slot, datosPaciente);
+        // Si la cita está delegada, usar el médico original
+        String nombreMedico;
+        Long idMedico;
+        if (cita.getIdMedicoDelegado() != null && cita.getIdMedicoOriginal() != null) {
+            EmpleadoClientResponse medicoOriginal = empleadoClient.obtenerNombre(cita.getIdMedicoOriginal());
+            nombreMedico = medicoOriginal.nombreCompleto();
+            idMedico = medicoOriginal.id();
+        } else {
+            nombreMedico = slot.medico().nombreCompleto();
+            idMedico = slot.medico().id();
+        }
+
+        return toFeignResponse(
+                cita.getId(),
+                cita.getEstado(),
+                slot,
+                datosPaciente,
+                nombreMedico,
+                idMedico,
+                cita.getIdMedicoDelegado(),
+                motivoReemplazo
+        );
+    }
+
+    /**
+     * Delega una Cita Médica a otro Médico
+     * Mueve la cita del horario del Médico A al horario del Médico B
+     *
+     * @param idCita Identificador único de la Cita Médica
+     * @param idMedicoDelegado Identificador único del Médico Delegado
+     * @param request Objeto que contiene el motivo de reemplazo
+     * @return Objeto {@link CitaMedicaResponse} que contiene los datos de la Cita Médica
+     * @throws EntityNotFoundException Si no se encuentra una cita con el ID brindado
+     * @throws IllegalStateException Si la cita no está pendiente o no hay slots disponibles
+     */
+    @Transactional
+    public CitaMedicaResponse delegarCita(Long idCita, Long idMedicoDelegado, MotivoReemplazoRequest request) {
+        log.info("Inicio de delegar cita con ID: {} al medico: {}", idCita, idMedicoDelegado);
+
+        CitaMedica cita = repository.findById(idCita)
+                .orElseThrow(() -> {
+                    log.warn("Cita con ID: {} no encontrada", idCita);
+                    return new EntityNotFoundException("Cita con id: " + idCita + " no encontrada");
+                });
+
+        if (cita.getEstado() != CitaMedica.EstadoCitaMedica.PENDIENTE) {
+             throw new IllegalStateException("Solo se pueden delegar citas pendientes");
+        }
+
+        // Obtener el slot original del Médico A para conocer la fecha y hora
+        SlotClientResponse slotOriginal = obtenerSlot(cita.getIdHorario(), cita.getIdDetalleHorario());
+        log.debug("Slot original - fecha: {}, hora: {}, medico: {}", slotOriginal.fecha(), slotOriginal.hora(), slotOriginal.medico().nombreCompleto());
+
+        // Guardar el ID del médico original (Médico A) antes de mover la cita
+        Long idMedicoOriginal = slotOriginal.medico().id();
+        log.debug("Guardando ID del médico original: {}", idMedicoOriginal);
+
+        // Buscar un slot disponible del Médico B para la misma fecha y hora
+        SlotDisponibleResponse slotDisponible = detallesClient.buscarSlotDisponible(
+                idMedicoDelegado,
+                slotOriginal.fecha(),
+                slotOriginal.hora()
+        );
+        log.debug("Slot disponible encontrado para Médico B - idHorario: {}, idSlot: {}, hora: {}",
+                slotDisponible.idHorario(), slotDisponible.idSlot(), slotDisponible.horaInicio());
+
+        // Guardar los IDs del horario y slot originales antes de liberarlos
+        Long idHorarioOriginal = cita.getIdHorario();
+        Long idDetalleOriginal = cita.getIdDetalleHorario();
+
+        // Liberar el slot del Médico A
+        log.debug("Liberando slot del Médico A - idHorario: {}, idSlot: {}", idHorarioOriginal, idDetalleOriginal);
+        liberarSlot(idHorarioOriginal, idDetalleOriginal);
+
+        // Actualizar la cita con el nuevo horario y slot del Médico B
+        cita.setIdHorario(slotDisponible.idHorario());
+        cita.setIdDetalleHorario(slotDisponible.idSlot());
+        cita.setIdMedicoDelegado(idMedicoDelegado);
+        cita.setIdMedicoOriginal(idMedicoOriginal); // Guardar el médico original
+        cita.setMotivoReemplazo(request.motivoReemplazo());
+
+        // Guardar la cita actualizada
+        repository.save(cita);
+        log.debug("Cita actualizada con nuevo horario - idHorario: {}, idSlot: {}",
+                cita.getIdHorario(), cita.getIdDetalleHorario());
+
+        // Ocupar el nuevo slot del Médico B
+        log.debug("Ocupando slot del Médico B - idHorario: {}, idSlot: {}, idCita: {}",
+                slotDisponible.idHorario(), slotDisponible.idSlot(), cita.getId());
+        ocuparSlot(slotDisponible.idHorario(), slotDisponible.idSlot(), cita.getId());
+
+        log.info("Cita con ID: {} delegada correctamente al medico: {} y movida al nuevo horario", idCita, idMedicoDelegado);
+
+        return toResponse(cita);
     }
 
     /**
@@ -685,7 +796,24 @@ public class CitaMedicaService {
 
         PacienteSimpleResponse paciente = obtenerPacienteSimple(citaMedica.getDniPaciente());
         SlotClientResponse slot = obtenerSlot(citaMedica.getIdHorario(), citaMedica.getIdDetalleHorario());
-        CitaMedicaResponse.DetallesCita detallesCita = toDetallesCita(slot);
+
+        String motivoReemplazo = (citaMedica.getMotivoReemplazo() != null) ? citaMedica.getMotivoReemplazo() : null;
+
+        // Si la cita está delegada, usar el médico original en lugar del médico del slot actual
+        SlotClientResponse.MedicoResponse medicoAResponse;
+        if (citaMedica.getIdMedicoDelegado() != null && citaMedica.getIdMedicoOriginal() != null) {
+            // Obtener información del médico original
+            EmpleadoClientResponse medicoOriginal = empleadoClient.obtenerNombre(citaMedica.getIdMedicoOriginal());
+            medicoAResponse = new SlotClientResponse.MedicoResponse(
+                    medicoOriginal.id(),
+                    medicoOriginal.nombreCompleto()
+            );
+        } else {
+            // Usar el médico del slot actual (cita no delegada)
+            medicoAResponse = slot.medico();
+        }
+
+        CitaMedicaResponse.DetallesCita detallesCita = toDetallesCita(slot, medicoAResponse, motivoReemplazo);
 
         return new CitaMedicaResponse(
                 citaMedica.getId(),
@@ -696,7 +824,10 @@ public class CitaMedicaService {
         );
     }
 
-    private CitaMedicaResponse.DetallesCita toDetallesCita(SlotClientResponse slot) {
+    private CitaMedicaResponse.DetallesCita toDetallesCita(
+            SlotClientResponse slot,
+            SlotClientResponse.MedicoResponse medico,
+            String motivoReemplazo) {
 
         CitaMedicaResponse.DatosEspecialidad especialidad = new CitaMedicaResponse.DatosEspecialidad(
                 slot.especialidad().id(),
@@ -704,27 +835,35 @@ public class CitaMedicaService {
         );
 
         return new CitaMedicaResponse.DetallesCita(
-                slot.medico(),
+                medico,
                 especialidad,
                 slot.fecha(),
                 slot.hora(),
-                slot.consultorio()
+                slot.consultorio(),
+                motivoReemplazo
         );
     }
 
     private CitaMedicaFeignResponse toFeignResponse(Long id,
                                                     CitaMedica.EstadoCitaMedica estado,
                                                     SlotClientResponse slot,
-                                                    CitaMedicaFeignResponse.DatosPaciente paciente) {
+                                                    CitaMedicaFeignResponse.DatosPaciente paciente,
+                                                    String nombreMedico,
+                                                    Long idMedico,
+                                                    Long idMedicoDelegado,
+                                                    String motivoReemplazo) {
         return new CitaMedicaFeignResponse(
                 id,
                 slot.fecha(),
                 slot.hora(),
                 paciente,
                 slot.especialidad().costo(),
-                slot.medico().nombreCompleto(),
+                nombreMedico,
                 slot.especialidad().nombre(),
-                estado
+                estado,
+                idMedico,
+                idMedicoDelegado,
+                motivoReemplazo
         );
     }
 
