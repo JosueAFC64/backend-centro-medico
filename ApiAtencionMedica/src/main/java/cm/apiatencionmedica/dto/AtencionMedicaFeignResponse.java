@@ -2,6 +2,7 @@ package cm.apiatencionmedica.dto;
 
 import cm.apiatencionmedica.client.citamedica.CitaMedicaFeignResponse;
 import cm.apiatencionmedica.client.empleado.EmpleadoClientResponse;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.constraints.NotNull;
 
@@ -19,6 +20,7 @@ public record AtencionMedicaFeignResponse(
         LocalDate fechaAtencion,
 
         @Parameter(description = "Hora de la Atención Médica", example = "10:30:00")
+        @JsonFormat(pattern = "HH:mm:ss")
         LocalTime horaAtencion,
 
         @Parameter(description = "Diagnostico de la Atención Médica", example = "Tienes cáncer Andy")

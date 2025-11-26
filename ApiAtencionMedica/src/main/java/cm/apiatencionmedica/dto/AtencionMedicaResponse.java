@@ -1,5 +1,6 @@
 package cm.apiatencionmedica.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
@@ -13,6 +14,7 @@ public record AtencionMedicaResponse(
         LocalDate fechaAtencion,
 
         @Schema(description = "Hora de la Atención Médica", example = "10:00:00")
+        @JsonFormat(pattern = "HH:mm:ss")
         LocalTime horaAtencion,
 
         @Schema(description = "Diagnostico de la Atención Médica", example = "Tienes cáncer Andy")
