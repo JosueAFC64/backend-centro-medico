@@ -9,6 +9,7 @@ import cm.apihorario.client.empleado.EmpleadoFeignClient;
 import cm.apihorario.client.especialidad.EspecialidadFeignClient;
 import cm.apihorario.client.especialidad.EspecialidadResponse;
 import cm.apihorario.dto.SlotClientResponse;
+import cm.apihorario.dto.SlotDisponibleResponse;
 import cm.apihorario.dto.HorarioRequest;
 import cm.apihorario.dto.HorarioResponse;
 import cm.apihorario.repository.DetalleHorario;
@@ -394,6 +395,76 @@ public class HorarioService {
                 });
 
         return toClientResponse(detalle, horario);
+    }
+
+    /**
+     * Busca un slot disponible de un médico para una fecha y hora específica
+     * Si no hay un slot exacto a esa hora, busca el más cercano disponible
+     *
+     * @param idMedico Identificador único del médico
+     * @param fecha Fecha para buscar el slot
+     * @param hora Hora preferida para el slot (puede ser null para buscar cualquier slot disponible)
+     * @return Objeto {@link SlotDisponibleResponse} que contiene los datos del slot disponible
+     * @throws IllegalArgumentException Si no existe un horario para ese médico en esa fecha o no hay slots disponibles
+     */
+    @Transactional(readOnly = true)
+    public SlotDisponibleResponse buscarSlotDisponible(Long idMedico, LocalDate fecha, LocalTime hora) {
+        log.info("Buscando slot disponible para médico: {} en fecha: {} a hora: {}", idMedico, fecha, hora);
+
+        List<Horario> horarios = repository.findByEmpleadoYFecha(idMedico, fecha);
+
+        if (horarios.isEmpty()) {
+            log.warn("No existe un horario para el médico: {} en la fecha: {}", idMedico, fecha);
+            throw new IllegalArgumentException("No existe un horario para el médico en la fecha especificada");
+        }
+
+        // Si solo hay un horario por día (como propone el usuario), usamos ese
+        // Si hay varios, tomamos el primero que tenga slots disponibles
+        Horario horarioSeleccionado = horarios.stream()
+                .filter(h -> h.contarSlotsDisponibles() > 0)
+                .findFirst()
+                .orElseThrow(() -> {
+                    log.warn("No hay slots disponibles para el médico: {} en la fecha: {}", idMedico, fecha);
+                    return new IllegalArgumentException("No hay slots disponibles para el médico en la fecha especificada");
+                });
+
+        DetalleHorario slotDisponible;
+
+        if (hora != null) {
+            // Buscar slot que coincida exactamente con la hora o el más cercano
+            slotDisponible = horarioSeleccionado.getDetalles().stream()
+                    .filter(d -> d.estaDisponible())
+                    .min((d1, d2) -> {
+                        // Comparar qué slot está más cerca de la hora deseada
+                        long diff1 = Math.abs(java.time.Duration.between(d1.getHoraInicio(), hora).toMinutes());
+                        long diff2 = Math.abs(java.time.Duration.between(d2.getHoraInicio(), hora).toMinutes());
+                        return Long.compare(diff1, diff2);
+                    })
+                    .orElseThrow(() -> {
+                        log.warn("No hay slots disponibles para el médico: {} en la fecha: {} a la hora: {}", idMedico, fecha, hora);
+                        return new IllegalArgumentException("No hay slots disponibles para el médico en la fecha y hora especificadas");
+                    });
+        } else {
+            // Si no se especifica hora, tomar el primer slot disponible
+            slotDisponible = horarioSeleccionado.getDetalles().stream()
+                    .filter(DetalleHorario::estaDisponible)
+                    .findFirst()
+                    .orElseThrow(() -> {
+                        log.warn("No hay slots disponibles para el médico: {} en la fecha: {}", idMedico, fecha);
+                        return new IllegalArgumentException("No hay slots disponibles para el médico en la fecha especificada");
+                    });
+        }
+
+        log.info("Slot disponible encontrado: idHorario={}, idSlot={}, horaInicio={}",
+                horarioSeleccionado.getId(), slotDisponible.getId(), slotDisponible.getHoraInicio());
+
+        return SlotDisponibleResponse.builder()
+                .idHorario(horarioSeleccionado.getId())
+                .idSlot(slotDisponible.getId())
+                .fecha(fecha)
+                .horaInicio(slotDisponible.getHoraInicio())
+                .horaFin(slotDisponible.getHoraFin())
+                .build();
     }
 
     // MAPEADORES A DTO

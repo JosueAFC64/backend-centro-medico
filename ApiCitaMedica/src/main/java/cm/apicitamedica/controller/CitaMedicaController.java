@@ -3,6 +3,7 @@ package cm.apicitamedica.controller;
 import cm.apicitamedica.dto.CitaMedicaFeignResponse;
 import cm.apicitamedica.dto.CitaMedicaRequest;
 import cm.apicitamedica.dto.CitaMedicaResponse;
+import cm.apicitamedica.dto.MotivoReemplazoRequest;
 import cm.apicitamedica.exceptions.ErrorResponse;
 import cm.apicitamedica.service.CitaMedicaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -301,6 +302,68 @@ public class CitaMedicaController {
         log.info("Solicitud de completar Cita con ID: {} terminada, respuesta enviada", id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/delegar")
+    @Operation(summary = "Delegar una cita médica",
+            description = "Delega una cita médica existente a otro médico")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Cita delegada correctamente",
+                    content = @Content(schema = @Schema(implementation = CitaMedicaResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "ID inválido o cita no pendiente",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Cita médica no encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Error interno del servidor",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<CitaMedicaResponse> delegar(
+            @Parameter(description = "Identificador único de la Cita")
+            @PathVariable
+            @Positive(message = "El ID de la Cita debe ser positivo")
+            Long id,
+
+            @Parameter(description = "Identificador único del Médico Delegado")
+            @RequestParam
+            @Positive(message = "El ID del Médico debe ser positivo")
+            Long idMedicoDelegado,
+
+            @Parameter(description = "Motivo de reemplazo de la cita")
+            @RequestBody
+            @Valid
+            MotivoReemplazoRequest request) {
+
+        log.info("Solicitud de delegar Cita con ID: {} al medico: {} recibida", id, idMedicoDelegado);
+        CitaMedicaResponse cita = service.delegarCita(id, idMedicoDelegado, request);
+        log.info("Solicitud de delegar Cita con ID: {} terminada, respuesta enviada", id);
+
+        return ResponseEntity.ok().body(cita);
+    }
+
+    @GetMapping("/delegadas/{idMedicoDelegado}")
+    public ResponseEntity<List<CitaMedicaResponse>> buscarCitasDelegadas(
+            @Parameter(description = "Identificador único de el Médico")
+            @PathVariable
+            @Positive(message = "El ID de el Médico debe ser positivo")
+            Long idMedicoDelegado) {
+
+        log.info("Solicitud de buscar citas delegadas para Médico: {} recibida", idMedicoDelegado);
+        List<CitaMedicaResponse> citas = service.buscarCitasDelegadas(idMedicoDelegado);
+        log.info("Solicitud de buscar citas delegadas para Médico: {} terminada, respuesta enviada", idMedicoDelegado);
+
+        return ResponseEntity.ok().body(citas);
     }
 
     // ENDPOINTS PARA BRINDAR DATOS A OTROS MICROSERVICIOS

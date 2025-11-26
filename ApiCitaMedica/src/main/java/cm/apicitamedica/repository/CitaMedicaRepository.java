@@ -48,4 +48,6 @@ public interface CitaMedicaRepository extends JpaRepository<CitaMedica, Long> {
     Optional<CitaMedica> findByDniPaciente(String dniPaciente);
 
     List<CitaMedica> findAllByDniPacienteAndEstado(String dniPaciente, CitaMedica.EstadoCitaMedica estado);
+
+    List<CitaMedica> findAllByIdMedicoDelegado(Long idMedicoDelegado);
 }

@@ -30,7 +30,16 @@ public record CitaMedicaFeignResponse(
         String especialidad,
 
         @Schema(description = "Estado de la Cita Médica", example = "COMPLETADA")
-        CitaMedica.EstadoCitaMedica estado
+        CitaMedica.EstadoCitaMedica estado,
+
+        @Schema(description = "ID del Médico original", example = "1")
+        Long idMedico,
+
+        @Schema(description = "ID del Médico delegado (si existe)", example = "2")
+        Long idMedicoDelegado,
+
+        @Schema(description = "Motivo de reemplazo de la Cita", example = "Diarrea")
+        String motivoReemplazo
 ) {
         public record DatosPaciente(
                 String nombre,
