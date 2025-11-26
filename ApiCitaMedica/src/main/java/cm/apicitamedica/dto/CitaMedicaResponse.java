@@ -30,7 +30,8 @@ public record CitaMedicaResponse(
                 DatosEspecialidad especialidad,
                 LocalDate fecha,
                 LocalTime hora,
-                SlotClientResponse.ConsultorioResponse consultorio
+                SlotClientResponse.ConsultorioResponse consultorio,
+                String motivoReemplazo
         ) {}
 
         public record DatosEspecialidad(

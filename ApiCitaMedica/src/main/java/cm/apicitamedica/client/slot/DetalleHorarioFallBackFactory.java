@@ -8,6 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+
 @Slf4j
 @Component
 public class DetalleHorarioFallBackFactory implements FallbackFactory<DetalleHorarioFeignClient> {
@@ -32,6 +35,11 @@ public class DetalleHorarioFallBackFactory implements FallbackFactory<DetalleHor
             @Override
             public void liberarSlot(Long idHorario, Long idDetalle) {
                 handleOperacionSlotError(cause, idHorario, idDetalle, "liberar");
+            }
+
+            @Override
+            public SlotDisponibleResponse buscarSlotDisponible(Long idMedico, LocalDate fecha, LocalTime hora) {
+                throw new RuntimeException("CACA");
             }
         };
     }

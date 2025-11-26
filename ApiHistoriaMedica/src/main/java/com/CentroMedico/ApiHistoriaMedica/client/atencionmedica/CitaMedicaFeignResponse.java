@@ -1,5 +1,6 @@
 package com.CentroMedico.ApiHistoriaMedica.client.atencionmedica;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
@@ -22,7 +23,10 @@ public record CitaMedicaFeignResponse(
         String medico,
 
         @Schema(description = "Nombre de la especialidad", example = "Cardiología")
-        String especialidad
+        String especialidad,
+
+        @Parameter(description = "Motivo del reemplazo al Médico original", example = "Diarrea")
+        String motivoReemplazo
 ) {
     public record DatosPaciente(
             String nombre,

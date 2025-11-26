@@ -29,6 +29,15 @@ public class CitaMedica {
     @Column(name = "id_detalle_horario", nullable = false)
     private Long idDetalleHorario;
 
+    @Column(name = "id_medico_delegado")
+    private Long idMedicoDelegado;
+
+    @Column(name = "id_medico_original")
+    private Long idMedicoOriginal;
+
+    @Column(name = "motivo_reemplazo")
+    private String motivoReemplazo;
+
     @Column(name = "costo", nullable = false)
     private BigDecimal costo;
 

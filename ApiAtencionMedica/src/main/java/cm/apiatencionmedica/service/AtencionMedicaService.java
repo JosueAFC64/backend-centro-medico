@@ -1,5 +1,7 @@
 package cm.apiatencionmedica.service;
 
+import cm.apiatencionmedica.client.empleado.EmpleadoClientResponse;
+import cm.apiatencionmedica.client.empleado.EmpleadoFeignClient;
 import cm.apiatencionmedica.client.historiamedica.HistoriaMedicaFeignClient;
 import cm.apiatencionmedica.client.citamedica.CitaMedicaFeignClient;
 import cm.apiatencionmedica.client.citamedica.CitaMedicaFeignResponse;
@@ -21,17 +23,26 @@ public class AtencionMedicaService {
     private final AtencionMedicaRepository repository;
     private final CitaMedicaFeignClient citaMedicaClient;
     private final HistoriaMedicaFeignClient historiaMedicaClient;
+    private final EmpleadoFeignClient empleadoClient;
 
     @Transactional
     public AtencionMedicaResponse registrar(AtencionMedicaRequest request) {
         log.info("Inicio de proceso de registro para ID: {}", request.idCita());
 
+        CitaMedicaFeignResponse cita = obtenerCitaMedica(request.idCita());
+
+        Long idMedicoEsperado = (cita.idMedicoDelegado() != null) ? cita.idMedicoDelegado() : cita.idMedico();
+        boolean esReemplazo = !idMedicoEsperado.equals(request.idMedicoEjecutor());
+
         log.debug("Creando entidad AtencionMedica: {}", request);
         AtencionMedica atencionMedica = AtencionMedica.builder()
                 .idCita(request.idCita())
+                .fechaAtencion(request.fechaAtencion())
                 .diagnostico(request.diagnostico())
                 .tratamiento(request.tratamiento())
                 .observaciones(request.observaciones())
+                .idMedicoEjecutor(request.idMedicoEjecutor())
+                .esMedicoReemplazo(esReemplazo)
                 .build();
 
         repository.save(atencionMedica);
@@ -60,12 +71,13 @@ public class AtencionMedicaService {
     // SERVICIOS PARA OBTENER DATOS DE OTROS MICROSERVICIOS
 
     private CitaMedicaFeignResponse obtenerCitaMedica(Long idCita) {
-        if (idCita == null || idCita <= 0) {
-            log.warn("Intento de obtener cita médica con ID inválido: {}", idCita);
-            throw new IllegalArgumentException("ID inválido");
-        }
-
+        log.info("Obteniendo Cita Medica para ID: {}", idCita);
         return citaMedicaClient.obtenerCita(idCita);
+    }
+
+    private EmpleadoClientResponse obtenerMedico(Long idMedico) {
+        log.info("Obteniendo Medico para ID: {}", idMedico);
+        return empleadoClient.obtenerNombre(idMedico);
     }
 
     // SERVICIOS PARA BRINDAR DATOS A OTROS MICROSERVICIOS
@@ -106,6 +118,8 @@ public class AtencionMedicaService {
     private AtencionMedicaResponse toResponse(AtencionMedica a) {
         return new AtencionMedicaResponse(
                 a.getId(),
+                a.getFechaAtencion(),
+                a.getHoraAtencion(),
                 a.getDiagnostico(),
                 a.getTratamiento(),
                 a.getObservaciones()
@@ -114,9 +128,13 @@ public class AtencionMedicaService {
 
     private AtencionMedicaFeignResponse toFeignResponse(AtencionMedica a) {
         CitaMedicaFeignResponse cita = obtenerCitaMedica(a.getIdCita());
+        EmpleadoClientResponse medicoEjecutor = obtenerMedico(a.getIdMedicoEjecutor());
 
         return new AtencionMedicaFeignResponse(
                 a.getId(),
+                medicoEjecutor,
+                a.getFechaAtencion(),
+                a.getHoraAtencion(),
                 a.getDiagnostico(),
                 a.getTratamiento(),
                 a.getObservaciones(),
