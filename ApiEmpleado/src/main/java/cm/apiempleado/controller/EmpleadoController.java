@@ -234,15 +234,6 @@ public class EmpleadoController {
         return ResponseEntity.ok(medicos);
     }
 
-    @GetMapping("/medicos")
-    public ResponseEntity<List<MedicoResponse>> listarMedicos() {
-        log.info("Solicitud de listar médicos recibida");
-        List<MedicoResponse> medicos = service.listarMedicos();
-        log.info("Solicitud de listar médicos terminada, respuesta enviada");
-
-        return ResponseEntity.ok().body(medicos);
-    }
-
     // ENDPOINTS PARA BRINDAR DATOS A OTROS MICROSERVICIOS
 
     @GetMapping("/client/{id}")
@@ -281,6 +272,15 @@ public class EmpleadoController {
         log.info("Solicitud de buscar nombre de empleado con ID: {} terminada, respuesta enviada", id);
 
         return ResponseEntity.ok(empleado);
+    }
+
+    @GetMapping("/medicos")
+    public ResponseEntity<List<EmpleadoClientResponse>> listarMedicos() {
+        log.info("Solicitud de listar médicos recibida");
+        List<EmpleadoClientResponse> medicos = service.listarMedicos();
+        log.info("Solicitud de listar médicos terminada, respuesta enviada");
+
+        return ResponseEntity.ok().body(medicos);
     }
 
 }

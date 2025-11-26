@@ -274,13 +274,13 @@ public class EmpleadoService {
     }
 
     @Transactional(readOnly = true)
-    public List<MedicoResponse> listarMedicos() {
+    public List<EmpleadoClientResponse> listarMedicos() {
 
         List<Empleados> medicos = repository.findAll();
 
         return medicos.stream()
                 .filter(m -> m.getCargo() == Empleados.Cargos.MEDICO)
-                .map(this::toMedicoResponse)
+                .map(this::toClientResponse)
                 .toList();
     }
 
@@ -341,14 +341,6 @@ public class EmpleadoService {
     }
 
     // MAPEADORES A DTO
-
-    private MedicoResponse toMedicoResponse(Empleados e) {
-        return new MedicoResponse(
-                e.getId(),
-                e.getNombres(),
-                e.getApellidos()
-        );
-    }
 
     private EmpleadoResponse toResponse(Empleados empleado){
         List<EspecialidadResponse> especialidades = empleado.getEspecialidadIds() == null || empleado.getEspecialidadIds().isEmpty()
