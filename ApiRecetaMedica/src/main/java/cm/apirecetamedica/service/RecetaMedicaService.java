@@ -29,15 +29,17 @@ public class RecetaMedicaService {
     private final PacienteFeignClient pacienteClient;
     private final EmpleadoFeignClient empleadoClient;
     private final MedicamentosFeignClient medicamentosClient;
+    private final RecetaMedicaPdfService pdfService;
 
     @Transactional
-    public RecetaMedicaResponse registrar(RecetaMedicaRequest request) {
+    public byte[] registrar(RecetaMedicaRequest request) {
         log.info("Registrando Receta Médica");
 
         log.debug("Creando entidad RecetaMedica");
         RecetaMedica rm = RecetaMedica.builder()
                 .dniPaciente(request.dniPaciente())
                 .idMedico(request.idMedico())
+                .idAtencion(request.idAtencion())
                 .fechaSolicitud(request.fechaSolicitud())
                 .build();
 
@@ -47,7 +49,7 @@ public class RecetaMedicaService {
         repository.save(rm);
         log.info("Receta Médica registrada correctamente con ID: {}", rm.getId());
 
-        return toResponse(rm);
+        return pdfService.generarPdfRecetaMedica(toResponse(rm));
     }
 
     @Transactional(readOnly = true)
@@ -79,6 +81,22 @@ public class RecetaMedicaService {
     public PacienteSimpleResponse obtenerPaciente(String dniPaciente) {
         log.info("Obteniendo Paciente con DNI: {}", dniPaciente);
         return pacienteClient.obtenerPacienteSimple(dniPaciente);
+    }
+
+    // SERVICIOS PARA OBTENER DATOS DE OTROS MICROSERVICIOS
+
+    @Transactional(readOnly = true)
+    public RecetaMedicaResponse brindarReceta(Long idAtencion) {
+        log.info("Brindado Receta Médica por ID Atención Médica: {}", idAtencion);
+
+        RecetaMedica rm = repository.findByIdAtencion(idAtencion)
+                .orElseThrow(() -> {
+                    log.warn("Receta Médica con ID Atención Médica: {} no encontrada", idAtencion);
+                    return new EntityNotFoundException("Receta Médica con ID Atención Médica: " + idAtencion + " no encontrada");
+                });
+        log.info("Receta Médica con ID Atención Médica: {} encontrada", idAtencion);
+
+        return toResponse(rm);
     }
 
     // MAPEADORES A DTO

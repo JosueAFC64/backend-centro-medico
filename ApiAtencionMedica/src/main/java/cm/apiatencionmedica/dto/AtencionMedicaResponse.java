@@ -1,5 +1,7 @@
 package cm.apiatencionmedica.dto;
 
+import cm.apiatencionmedica.client.analisisclinico.AnalisisClinicoResponse;
+import cm.apiatencionmedica.client.recetamedica.RecetaMedicaResponse;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -24,6 +26,12 @@ public record AtencionMedicaResponse(
         String tratamiento,
 
         @Schema(description = "Observaciones de la Atención Médica", example = "Es etapa 4 y ya hizo metástasis")
-        String observaciones
+        String observaciones,
+
+        @Schema(description = "Datos de la Receta Médica", example = "{}")
+        RecetaMedicaResponse recetaMedica,
+
+        @Schema(description = "Datos del Análisis Clínico", example = "{}")
+        AnalisisClinicoResponse analisisClinico
 ) {
 }
