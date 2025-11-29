@@ -59,4 +59,19 @@ public class AnalisisClinicoController {
         return ResponseEntity.ok().body(response);
     }
 
+    @GetMapping("/feign/{idAtencion}")
+    @Operation(summary = "Brindar Análisis Clínico", description = "Busca un Análisis Clínico por idAtencion")
+    public ResponseEntity<AnalisisClinicoResponse> brindarAnalisis(
+            @Parameter(description = "Identificador único de la Atención Médica")
+            @Positive(message = "El ID debe ser positivo")
+            @PathVariable
+            Long idAtencion) {
+
+        log.info("Solicitud de buscar para ID Atención Médica: {} recibida", idAtencion);
+        AnalisisClinicoResponse response = service.brindarAnalisis(idAtencion);
+        log.info("Solicitud de buscar para ID Atención Médica: {} terminada, respuesta enviada", idAtencion);
+
+        return ResponseEntity.ok().body(response);
+    }
+
 }

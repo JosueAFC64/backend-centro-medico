@@ -29,7 +29,13 @@ public record AtencionMedicaFeignResponse(
         String observaciones,
 
         @Parameter(description = "Datos de la Cita Médica asociada a la Atención Médica", example = "[]")
-        CitaMedicaFeignResponse cita
+        CitaMedicaFeignResponse cita,
+
+        @Schema(description = "Datos de la Receta Médica", example = "{}")
+        RecetaMedicaResponse recetaMedica,
+
+        @Schema(description = "Datos del Análisis Clínico", example = "{}")
+        AnalisisClinicoResponse analisisClinico
 ) {
         public record EmpleadoClientResponse(
                 @Schema(description = "Identificador único del empleado", example = "1")

@@ -10,6 +10,10 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record RecetaMedicaRequest(
+        @Schema(description = "ID de la Atención Médica", example = "1")
+        @NotNull(message = "El ID de la Atención Médica es requerido")
+        Long idAtencion,
+
         @Schema(description = "ID del Médico solicitante", example = "1")
         @NotNull(message = "El ID del Médico es requerido")
         Long idMedico,

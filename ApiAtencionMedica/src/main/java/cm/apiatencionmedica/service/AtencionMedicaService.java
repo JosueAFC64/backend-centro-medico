@@ -1,10 +1,14 @@
 package cm.apiatencionmedica.service;
 
+import cm.apiatencionmedica.client.analisisclinico.AnalisisClinicoFeignClient;
+import cm.apiatencionmedica.client.analisisclinico.AnalisisClinicoResponse;
 import cm.apiatencionmedica.client.empleado.EmpleadoClientResponse;
 import cm.apiatencionmedica.client.empleado.EmpleadoFeignClient;
 import cm.apiatencionmedica.client.historiamedica.HistoriaMedicaFeignClient;
 import cm.apiatencionmedica.client.citamedica.CitaMedicaFeignClient;
 import cm.apiatencionmedica.client.citamedica.CitaMedicaFeignResponse;
+import cm.apiatencionmedica.client.recetamedica.RecetaMedicaFeignClient;
+import cm.apiatencionmedica.client.recetamedica.RecetaMedicaResponse;
 import cm.apiatencionmedica.dto.AtencionMedicaFeignResponse;
 import cm.apiatencionmedica.dto.AtencionMedicaRequest;
 import cm.apiatencionmedica.dto.AtencionMedicaResponse;
@@ -24,6 +28,8 @@ public class AtencionMedicaService {
     private final CitaMedicaFeignClient citaMedicaClient;
     private final HistoriaMedicaFeignClient historiaMedicaClient;
     private final EmpleadoFeignClient empleadoClient;
+    private final RecetaMedicaFeignClient recetaMedicaClient;
+    private final AnalisisClinicoFeignClient analisisClinicoClient;
 
     @Transactional
     public AtencionMedicaResponse registrar(AtencionMedicaRequest request) {
@@ -116,19 +122,27 @@ public class AtencionMedicaService {
     // MAPEADORES A DTO
 
     private AtencionMedicaResponse toResponse(AtencionMedica a) {
+
+        RecetaMedicaResponse recetaMedica = recetaMedicaClient.obtenerRecetaMedica(a.getId());
+        AnalisisClinicoResponse analisisClinico = analisisClinicoClient.obtenerAnalisisClinico(a.getId());
+
         return new AtencionMedicaResponse(
                 a.getId(),
                 a.getFechaAtencion(),
                 a.getHoraAtencion(),
                 a.getDiagnostico(),
                 a.getTratamiento(),
-                a.getObservaciones()
+                a.getObservaciones(),
+                recetaMedica,
+                analisisClinico
         );
     }
 
     private AtencionMedicaFeignResponse toFeignResponse(AtencionMedica a) {
         CitaMedicaFeignResponse cita = obtenerCitaMedica(a.getIdCita());
         EmpleadoClientResponse medicoEjecutor = obtenerMedico(a.getIdMedicoEjecutor());
+        RecetaMedicaResponse recetaMedica = recetaMedicaClient.obtenerRecetaMedica(a.getId());
+        AnalisisClinicoResponse analisisClinico = analisisClinicoClient.obtenerAnalisisClinico(a.getId());
 
         return new AtencionMedicaFeignResponse(
                 a.getId(),
@@ -138,7 +152,9 @@ public class AtencionMedicaService {
                 a.getDiagnostico(),
                 a.getTratamiento(),
                 a.getObservaciones(),
-                cita
+                cita,
+                recetaMedica,
+                analisisClinico
         );
     }
 }

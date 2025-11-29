@@ -40,6 +40,7 @@ public class AnalisisClinicoService {
                 .fechaSolicitud(request.fechaSolicitud())
                 .dniPaciente(request.dniPaciente())
                 .idMedico(request.idMedico())
+                .idAtencion(request.idAtencion())
                 .build();
 
         log.debug("Agregando Detalle Análisis a Análisis clínico");
@@ -80,6 +81,21 @@ public class AnalisisClinicoService {
     public EmpleadoClientResponse obtenerMedico(Long idMedico) {
         log.info("Obteniendo Médico");
         return empleadoClient.obtenerNombre(idMedico);
+    }
+
+    // SERVICIOS PARA BRINDAR DATOS DE OTROS MICROSERVICIOS
+
+    public AnalisisClinicoResponse brindarAnalisis(Long idAtencion) {
+        log.info("Brindando Analisis por ID Atención Médica: {}", idAtencion);
+
+        AnalisisClinico ac = repository.findByIdAtencion(idAtencion)
+                .orElseThrow(() -> {
+                    log.warn("Análisis Clínico con ID Atención Médica: {} no encontrado", idAtencion);
+                    return new EntityNotFoundException("Análisis Clínico con ID Atención Médica: " + idAtencion + " no encontrado");
+                });
+        log.debug("Análisis Clínico con ID Atención Médica: {} encontrado", idAtencion);
+
+        return toResponse(ac);
     }
 
     // MAPEADORES A DTO

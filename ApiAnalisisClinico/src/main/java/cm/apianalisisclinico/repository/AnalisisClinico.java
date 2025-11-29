@@ -28,6 +28,9 @@ public class AnalisisClinico {
     @Column(name = "id_medico", nullable = false)
     private Long idMedico;
 
+    @Column(name = "id_atencion", nullable = false)
+    private Long idAtencion;
+
     @Column(name = "fecha_solicitud",nullable = false)
     private LocalDate fechaSolicitud;
 

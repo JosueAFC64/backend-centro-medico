@@ -77,7 +77,7 @@ public class EmpleadoService {
                 .especialidadIds(new HashSet<>(request.especialidadesIds()))
                 .build();
         log.debug("Registrando usuario para el Empleado");
-//        registrarUsuario(e.getNombres(), e.getCorreo(), e.getDni(), e.getCargo().toString());
+        registrarUsuario(e.getNombres(), e.getCorreo(), e.getDni(), e.getCargo().toString());
         log.info("Usuario registrado correctamente");
 
         repository.save(e);

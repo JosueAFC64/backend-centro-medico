@@ -1,9 +1,12 @@
 package cm.apiatencionmedica.dto;
 
+import cm.apiatencionmedica.client.analisisclinico.AnalisisClinicoResponse;
 import cm.apiatencionmedica.client.citamedica.CitaMedicaFeignResponse;
 import cm.apiatencionmedica.client.empleado.EmpleadoClientResponse;
+import cm.apiatencionmedica.client.recetamedica.RecetaMedicaResponse;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
@@ -33,6 +36,12 @@ public record AtencionMedicaFeignResponse(
         String observaciones,
 
         @Parameter(description = "Datos de la Cita Médica asociada a la Atención Médica", example = "[]")
-        CitaMedicaFeignResponse cita
+        CitaMedicaFeignResponse cita,
+
+        @Schema(description = "Datos de la Receta Médica", example = "{}")
+        RecetaMedicaResponse recetaMedica,
+
+        @Schema(description = "Datos del Análisis Clínico", example = "{}")
+        AnalisisClinicoResponse analisisClinico
 ) {
 }
